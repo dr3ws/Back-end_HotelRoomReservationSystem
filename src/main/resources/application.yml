@@ -1,0 +1,49 @@
+server:
+  port: 8090
+  address: 0.0.0.0
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/HotelRoomReservationSystem
+    driverClassName: org.postgresql.Driver
+    username: postgres
+    password: root
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use-new-id-generator-mappings: false
+        show_sql: true
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+  flyway:
+    enabled: true
+
+swagger:
+  oauth2:
+    access-token-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/token
+    front-access-token-uri: ${multitenant-keycloak.apis.front.auth-server-url}/realms/Clients/protocol/openid-connect/token
+    client-id: client
+  base-path: ${SWAGGER_BASEPATH:/}
+multitenant-keycloak:
+  apis:
+    front:
+      auth-server-url: localhost:8080
+      realm: Clients
+      resource: front
+      bearer-only: true
+      cors: true
+
+keycloak:
+  auth-server-url: localhost:8080
+  realm: admins
+  resource:
+  bearer-only: true
+  cors: true
+
+springdoc:
+  swagger-ui:
+    tagsSorter: alpha

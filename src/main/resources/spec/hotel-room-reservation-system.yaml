@@ -1,0 +1,381 @@
+openapi: 3.0.3
+info:
+  title: Hotel room reservation system
+  description: API for hotel room reservation system
+  termsOfService: urn:tos
+  contact: {
+    name: Андрей Калинин,
+    email: andrei@mail.ru
+  }
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  version: '1.0'
+servers:
+  - url: http://localhost:8086
+    description: Inferred Url
+tags:
+  - name: admin
+    description: API for admin
+  - name: client
+    description: API for client
+security:
+  - adminOAuth2: []
+  - clientOAuth2: []
+
+paths:
+  /v1/client/reservationRoom/{roomId}:
+    post:
+      tags:
+        - client
+      summary: бронирование комнаты id
+      operationId: reservationRoom
+      parameters:
+        - name: roomId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error\
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      security:
+        - clientOAuth2: [ ]
+
+  /v1/client/rooms:
+    get:
+      tags:
+        - client
+      summary: получить список комнат по фильтру
+      operationId: getRooms
+      parameters:
+        - in: query
+          name: filter
+          schema:
+            $ref: '#/components/schemas/Filter'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error\
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      security:
+        - clientOAuth2: [ ]
+
+  /v1/client/room/{id}:
+    get:
+      tags:
+        - client
+      summary: комната по id
+      operationId: getRoom
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error\
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      security:
+        - clientOAuth2: [ ]
+
+  /v1/client/room/{id}/pay:
+    post:
+      tags:
+        - client
+      summary: оплата комнаты id
+      operationId: payReservation
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Price'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      security:
+        - clientOAuth2: [ ]
+
+components:
+  securitySchemes:
+    clientOAuth2:
+      type: oauth2
+      description: Token from Client realm of Keycloak
+      flows:
+        password:
+          tokenUrl: localhost:8080/auth/realms/Client/protocol/openid-connect/token
+          refreshUrl: localhost:8080/auth/realms/Client/protocol/openid-connect/token
+          scopes: {}
+    adminOAuth2:
+      type: oauth2
+      description: Token from Admin realm of KeyCloak
+      flows:
+        password:
+          tokenUrl: localhost:8080/auth/realms/Admin/protocol/openid-connect/token
+          refreshUrl: localhost:8080/auth/realms/Admin/protocol/openid-connect/token
+          scopes: {}
+
+  schemas:
+    ReservationRequest:
+      required:
+        - checkInDate
+        - checkOutDate
+        - firstName
+        - lastName
+        - email
+      type: object
+      properties:
+        checkInDate:
+          $ref: '#/components/schemas/date'
+        checkOutDate:
+          $ref: '#/components/schemas/date'
+        firstName:
+          $ref: '#/components/schemas/FirstName'
+        lastName:
+          $ref: '#/components/schemas/LastName'
+        email:
+          $ref: '#/components/schemas/Email'
+        phone:
+          $ref: '#/components/schemas/Phone'
+
+    ReservationResponse:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        checkInDate:
+          $ref: '#/components/schemas/date'
+        checkOutDate:
+          $ref: '#/components/schemas/date'
+        price:
+          $ref: '#/components/schemas/Price'
+        firstName:
+          $ref: '#/components/schemas/FirstName'
+        lastName:
+          $ref: '#/components/schemas/LastName'
+        email:
+          $ref: '#/components/schemas/Email'
+        room:
+          $ref: '#/components/schemas/Room'
+
+    Room:
+      type: object
+      properties:
+        number:
+          $ref: '#/components/schemas/Number'
+        places:
+          $ref: '#/components/schemas/Count'
+        category:
+          $ref: '#/components/schemas/Category'
+        price:
+          $ref: '#/components/schemas/Price'
+        image:
+          $ref: '#/components/schemas/ImagePath'
+        id:
+          $ref: '#/components/schemas/Id'
+
+    Filter:
+      type: object
+      required:
+        - checkInDate
+        - checkOutDate
+      properties:
+        category:
+          $ref: '#/components/schemas/CategoryName'
+        checkInDate:
+          $ref: '#/components/schemas/date'
+        checkOutDate:
+          $ref: '#/components/schemas/date'
+        placeCount:
+          $ref: '#/components/schemas/Count'
+        page:
+          $ref: '#/components/schemas/Page'
+        order:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          description: Список пар поле - значение
+
+    Category:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/CategoryName'
+    Id:
+      type: string
+      format: uuid
+    CategoryName:
+      type: string
+      example: Lux
+      description: название категории
+    ImagePath:
+      type: string
+      description: путь к картинке
+    Price:
+      type: number
+      format: цена комнаты
+      example: 1000
+    Number:
+      type: integer
+      description: номер комнаты
+      example: 1
+    Count:
+      type: integer
+      description: количество мест в комнате
+      example: 2
+    date:
+      type: string
+      format: date
+    FirstName:
+      type: string
+      format: firstName
+    LastName:
+      type: string
+      format: lastName
+    Email:
+      type: string
+      example: 1@mail.ru
+    Phone:
+      type: string
+      example: 89999999999
+
+    ErrorMessage:
+      type: "object"
+      description: "Сообщение об ошибки"
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: "Код ошибки"
+        status:
+          type: integer
+          format: int32
+          description: "Статус"
+        message:
+          type: string
+          description: "Сообщение"
+        error:
+          type: object
+          description: "Объект ошибки"
+        timestamp:
+          type: string
+          description: "Дата ошибки"
+          format: date-time
+
+    Page:
+      type: object
+      required:
+        - number
+        - count
+      properties:
+        number:
+          type: integer
+          example: 0
+          description: Требуемый номер страницы
+        count:
+          type: integer
+          example: 20
+          description: Требуемое количество записей на странице
+
+    OrderItem:
+      type: object
+      description: Упорядочивание строк ответа
+      properties:
+        field:
+          type: string
+          example: lastName
+          description: Название поле по которому необходимо выполнить упорядочивание
+        value:
+          enum:
+            - ASC
+            - DESC
+          type: string
+          example: ASC
+          description: Направление упорядочивания
